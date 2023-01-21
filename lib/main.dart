@@ -32,6 +32,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'data/meal_data.dart';
+import 'utils/app_util.dart';
+import 'utils/separeted_list.dart';
+import 'utils/string_case_converter.dart';
+import 'utils/json_converter.dart';
+import 'utils/themed_slider.dart';
 import 'widgets/counter.dart';
 import 'widgets/meal_info.dart';
 import 'widgets/meal_repartition_result.dart';
@@ -89,15 +94,13 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   List<Widget> _mainColumnContent() {
-    const space = SizedBox(height: 20);
-
     return [
       Text(
         'Cat Food Calculator',
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.displaySmall,
       ),
-      space,
+
       Wrap(
           alignment: WrapAlignment.center,
           runSpacing: 20,
@@ -158,9 +161,7 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ),
           ]),
-      space,
       _catWeightCommentBuilder(),
-      space,
       Wrap(runSpacing: 20, spacing: 40, children: [
         MealInfo(
           mealType: MealType.wet,
@@ -179,7 +180,6 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         ),
       ]),
-      space,
       Column(
         children: [
           Text(
@@ -192,24 +192,22 @@ class _MyHomePageState extends State<MyHomePage> {
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             Expanded(
-              // TODO Replace SliderTheme with ThemedSlider
-              child: SliderTheme(
-                data: const SliderThemeData(
+              child: ThemedSlider.withTheme(
+                value: _mealRepartition,
+                min: 0,
+                max: _nbMeals.toDouble(),
+                divisions: _nbMeals,
+                onChanged: (newVal) {
+                  setState(() {
+                    _mealRepartition = newVal;
+                  });
+                },
+                themeData: const SliderThemeData(
                   trackHeight: 16,
                   tickMarkShape: RoundSliderTickMarkShape(tickMarkRadius: 6),
                   thumbShape: RoundSliderThumbShape(enabledThumbRadius: 16),
                   thumbColor: Color(0xffffa938),
                 ),
-                child: Slider(
-                    value: _mealRepartition,
-                    min: 0,
-                    max: _nbMeals.toDouble(),
-                    divisions: _nbMeals,
-                    onChanged: (newVal) {
-                      setState(() {
-                        _mealRepartition = newVal;
-                      });
-                    }),
               ),
             ),
             Text(
@@ -217,29 +215,32 @@ class _MyHomePageState extends State<MyHomePage> {
               style: Theme.of(context).textTheme.headlineMedium,
             ),
           ]),
-          space,
           MealRepartitionResult(
             mealData: MealData.dry(
               nbMeals: _mealRepartition.round(),
               eachAmount: _calculateRation(MealType.dry),
             ),
           ),
-          const SizedBox(height: 8),
+          30.spaceHeight(),
           MealRepartitionResult(
             mealData: MealData.wet(
               nbMeals: (_nbMeals - _mealRepartition).round(),
               eachAmount: _calculateRation(MealType.wet),
             ),
           ),
-          // TODO add a save button here
+          20.spaceHeight(),
+          ElevatedButton(
+            onPressed: _saveMealData,
+            child: const Text('SAVE'),
+          ),
         ],
       ),
-    ]; // TODO Add separation between items with an extension
+    ].separated(const SizedBox(height: 20,));
   }
 
   Widget _catWeightCommentBuilder() {
     return Text(
-      _catWeightComment ?? '',
+      _catWeightComment.firstLetterUppercase(),
       textAlign: TextAlign.center,
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontStyle: FontStyle.italic,
@@ -276,6 +277,16 @@ class _MyHomePageState extends State<MyHomePage> {
     } else {
       return (nbRations * (catWeight * ratio) / _nbMeals).round();
     }
+  }
+
+  void _saveMealData() {
+    final mealData = MealData.dry(
+      nbMeals: _mealRepartition.round(),
+      eachAmount: _calculateRation(MealType.dry),
+    );
+
+    print('Json v1 : ${JsonConverter(mealData).stringify()}');
+    print('Json v2 : ${JsonConverterAlt(mealData).stringify()}');
   }
 
   @override

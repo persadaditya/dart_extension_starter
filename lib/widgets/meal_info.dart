@@ -31,11 +31,31 @@ THE SOFTWARE.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../utils/meal_type_dialog.dart';
+import '../utils/string_case_converter.dart';
 import 'counter.dart';
 
 enum MealType {
   wet,
   dry,
+}
+
+extension MealTypeExt on MealType{
+
+  int value(){
+    switch(this){
+      case MealType.wet:
+        return 0;
+      case MealType.dry:
+        return 1;
+    }
+  }
+}
+
+
+enum Gender {
+  man,
+  woman
 }
 
 class MealInfo extends StatefulWidget {
@@ -105,8 +125,7 @@ class _MealInfoState extends State<MealInfo> {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  // TODO Replace onInfoPressed with an extension
-                  onPressed: onInfoPressed,
+                  onPressed: ()=> widget.mealType.infoPopup(context),
                   splashRadius: 16,
                   icon: const Icon(
                     Icons.info,
@@ -127,33 +146,16 @@ class _MealInfoState extends State<MealInfo> {
     super.dispose();
   }
 
-  void onInfoPressed() {
-    final text = widget.mealType == MealType.wet
-        ? 'You can find this data printed on the pack of wet food'
-        : 'Your bag of dry food should have this data printed on it';
-    showDialog<void>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            content: Text(text),
-            actions: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              )
-            ],
-          );
-        });
-  }
-
   Widget _title() {
-    final foodType = widget.mealType.name.toUpperCase();
+    final foodType = widget.mealType.name.firstLetterUppercase();
 
     return Text(
       '$foodType food',
       style: Theme.of(context).textTheme.headlineSmall,
     );
+  }
+
+  Widget anotherWidget(){
+    return Container();
   }
 }
